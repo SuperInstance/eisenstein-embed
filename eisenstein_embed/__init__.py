@@ -1,6 +1,6 @@
 """Eisenstein Embed — Enhanced static embeddings with a 5-layer matching cascade."""
 
-from eisenstein_embed.static_model import EisensteinModel
+from eisenstein_embed.static_model import EisensteinModel, MatchResult
 from eisenstein_embed.cascade import CascadeMatcher
 from eisenstein_embed.bitvector import (
     word_fingerprint,
@@ -16,6 +16,7 @@ from eisenstein_embed.eisenstein_quantize import SplineLinearQuantizer
 
 __all__ = [
     "EisensteinModel",
+    "MatchResult",
     "CascadeMatcher",
     "word_fingerprint",
     "text_fingerprint",

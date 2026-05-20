@@ -18,6 +18,9 @@ class MatchResult:
         self.best_match = best_match
         self.score = score
         self.method = method
+    
+    def __repr__(self):
+        return f"MatchResult(best_match={self.best_match!r}, score={self.score:.3f}, method={self.method!r})"
 
 
 class EisensteinModel:
