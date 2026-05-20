@@ -1,13 +1,24 @@
 /** Strip common English suffixes to get a morphological stem. */
 export declare function stemWord(word: string): string;
-/** Compute a 32-bit FNV-1a fingerprint for a single word. */
-export declare function wordFingerprint(word: string): number;
-/** Compute a combined 32-bit fingerprint for a full text. */
-export declare function textFingerprint(text: string, useStemming?: boolean): number;
-/** Count differing bits between two 32-bit fingerprints. */
-export declare function hammingDistance(a: number, b: number): number;
-/** Normalized similarity between two 32-bit fingerprints [0, 1]. */
-export declare function bitvectorSimilarity(a: number, b: number): number;
+/**
+ * Compute a 64-bit fingerprint for a single word.
+ *
+ * Uses FNV-1a 64-bit over character unigrams and bigrams to set bits in a
+ * 64-bit integer.  Deterministic and cross-language compatible (matches
+ * Python version exactly).
+ */
+export declare function wordFingerprint(word: string): bigint;
+/**
+ * Compute a combined 64-bit fingerprint for a full text.
+ *
+ * Aggregates word fingerprints with XOR + left-rotate-by-1 on 64 bits.
+ * Stopwords are filtered.  Matches Python implementation exactly.
+ */
+export declare function textFingerprint(text: string, useStemming?: boolean): bigint;
+/** Count differing bits between two 64-bit fingerprints. */
+export declare function hammingDistance(a: bigint, b: bigint): number;
+/** Normalized similarity between two 64-bit fingerprints [0, 1]. */
+export declare function bitvectorSimilarity(a: bigint, b: bigint): number;
 export declare class DeadbandCache {
     threshold: number;
     maxSize: number;

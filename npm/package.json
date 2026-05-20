@@ -1,6 +1,6 @@
 {
   "name": "@superinstance/eisenstein-embed",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "5-layer matching cascade: exact → bitvector → semantic → domain → deadband. 93.8% typo accuracy, zero ML deps.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

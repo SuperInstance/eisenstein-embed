@@ -1,17 +1,19 @@
 // eisenstein-embed — 5-layer matching cascade for JavaScript/TypeScript
-// FNV-1a 32-bit fingerprints + Hamming distance bitvector matching
+// FNV-1a 64-bit fingerprints + Hamming distance bitvector matching
+// Mirrors the Python implementation exactly for cross-language compatibility.
 
-// --- FNV-1a 32-bit hash ---
-const FNV_32_PRIME = 0x01000193;
-const FNV_32_OFFSET = 0x811c9dc5;
+// --- FNV-1a 64-bit hash (BigInt arithmetic) ---
+const FNV_64_OFFSET = 0xCBF29CE484222325n;
+const FNV_64_PRIME  = 0x100000001B3n;
+const MASK_64       = 0xFFFFFFFFFFFFFFFFn;
 
-function fnv1a32(data: string): number {
-  let hash = FNV_32_OFFSET >>> 0;
+function fnv1a64(data: string): bigint {
+  let h = FNV_64_OFFSET;
   for (let i = 0; i < data.length; i++) {
-    hash ^= data.charCodeAt(i);
-    hash = Math.imul(hash, FNV_32_PRIME) >>> 0;
+    h ^= BigInt(data.charCodeAt(i));
+    h = (h * FNV_64_PRIME) & MASK_64;
   }
-  return hash >>> 0;
+  return h;
 }
 
 // --- Stopwords (mirrors Python version) ---
@@ -57,9 +59,39 @@ export function stemWord(word: string): string {
   return w;
 }
 
-/** Compute a 32-bit FNV-1a fingerprint for a single word. */
-export function wordFingerprint(word: string): number {
-  return fnv1a32(word.toLowerCase());
+/**
+ * Compute a 64-bit fingerprint for a single word.
+ *
+ * Uses FNV-1a 64-bit over character unigrams and bigrams to set bits in a
+ * 64-bit integer.  Deterministic and cross-language compatible (matches
+ * Python version exactly).
+ */
+export function wordFingerprint(word: string): bigint {
+  let fp = 0n;
+  const w = word.toLowerCase();
+  if (!w) return fp;
+
+  // Set bits based on character n-grams (unigrams and bigrams)
+  for (let i = 0; i < w.length; i++) {
+    // Unigram hash
+    const h1 = fnv1a64(w[i]);
+    const bit1 = Number(h1 % 64n);
+    fp |= 1n << BigInt(bit1);
+
+    // Bigram hash
+    if (i + 1 < w.length) {
+      const bigram = w[i] + w[i + 1];
+      const h2 = fnv1a64(bigram);
+      const bit2 = Number(h2 % 64n);
+      fp |= 1n << BigInt(bit2);
+    }
+  }
+
+  // Add length-based bit for extra discrimination
+  const lengthBit = (w.length * 7) % 64;
+  fp |= 1n << BigInt(lengthBit);
+
+  return fp & MASK_64;
 }
 
 /** Normalize text: lowercase, strip accents, collapse whitespace. */
@@ -77,39 +109,45 @@ function tokenize(text: string): string[] {
   return normalizeText(text).split(/\s+/).filter(Boolean);
 }
 
-/** Compute a combined 32-bit fingerprint for a full text. */
-export function textFingerprint(text: string, useStemming: boolean = false): number {
+/**
+ * Compute a combined 64-bit fingerprint for a full text.
+ *
+ * Aggregates word fingerprints with XOR + left-rotate-by-1 on 64 bits.
+ * Stopwords are filtered.  Matches Python implementation exactly.
+ */
+export function textFingerprint(text: string, useStemming: boolean = false): bigint {
   const words = tokenize(text);
-  if (words.length === 0) return 0;
+  if (words.length === 0) return 0n;
 
-  let fp = 0;
+  let fp = 0n;
   for (const word of words) {
     const lower = word.toLowerCase();
     if (STOPWORDS.has(lower)) continue;
     const lookup = useStemming ? stemWord(lower) : lower;
     const wfp = wordFingerprint(lookup);
-    // XOR + rotation mix (mirrors Python)
+    // Mix using XOR and rotation to avoid cancellation
     fp ^= wfp;
-    // Rotate left by 1 on 32 bits
-    fp = ((fp << 1) | (fp >>> 31)) >>> 0;
+    // Rotate left by 1 on 64 bits
+    fp = ((fp << 1n) | (fp >> 63n)) & MASK_64;
   }
-  return fp >>> 0;
+
+  return fp & MASK_64;
 }
 
-/** Count differing bits between two 32-bit fingerprints. */
-export function hammingDistance(a: number, b: number): number {
-  let x = (a ^ b) >>> 0;
+/** Count differing bits between two 64-bit fingerprints. */
+export function hammingDistance(a: bigint, b: bigint): number {
+  let x = (a ^ b) & MASK_64;
   let count = 0;
   while (x) {
-    x &= x - 1;
+    x &= x - 1n;
     count++;
   }
   return count;
 }
 
-/** Normalized similarity between two 32-bit fingerprints [0, 1]. */
-export function bitvectorSimilarity(a: number, b: number): number {
-  return 1.0 - hammingDistance(a, b) / 32.0;
+/** Normalized similarity between two 64-bit fingerprints [0, 1]. */
+export function bitvectorSimilarity(a: bigint, b: bigint): number {
+  return 1.0 - hammingDistance(a, b) / 64.0;
 }
 
 /** Find the best candidate by bitvector similarity. */
@@ -136,7 +174,7 @@ function findBestBitvectorMatch(
 // --- DeadbandCache ---
 
 export class DeadbandCache {
-  private entries: Array<{ text: string; fp: number; result: MatchResult }> = [];
+  private entries: Array<{ text: string; fp: bigint; result: MatchResult }> = [];
 
   constructor(
     public threshold: number = 0.90,

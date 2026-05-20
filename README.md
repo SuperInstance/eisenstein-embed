@@ -77,7 +77,7 @@ eisenstein_embed/
 | Method | Typo Accuracy | Hit Rate | Speed | Size | Dependencies |
 |--------|:---:|:---:|---|---|---|
 | Exact string match | 43.8% | 43.8% | ~0μs | 0KB | None |
-| **Bitvector (this)** | **93.8%** | **86.2%** | **~140μs** | **~0KB** | **None** |
+| **Bitvector (this)** | **93.8%** | **86.2%** | **~21μs** | **~0KB** | **None** |
 | Model2Vec semantic | 68.8% | 86.2% | ~33μs | ~400MB | model2vec |
 | Eisenstein V3 (ours) | — | 71.2% | ~3.4ms | 627KB | torch |
 | Full cascade | **95%+** | **90%+** | varies | varies | optional |

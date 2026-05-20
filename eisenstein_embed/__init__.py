@@ -38,5 +38,6 @@ try:
     from plato_core.registry import registry as _registry
     from eisenstein_embed.mesh import register_eisenstein as _register_eisenstein
     _register_eisenstein(_registry)
+    del _registry, _register_eisenstein
 except ImportError:
     pass  # Standalone mode — eisenstein-embed works fine alone
