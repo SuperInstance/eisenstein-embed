@@ -5,7 +5,13 @@ canonical TUTOR bitvector implementation. Falls back to a local
 implementation using rolling hash over character bigrams.
 """
 
-from typing import List
+from typing import List, FrozenSet
+
+# Common English stopwords that inflate bitvector similarity
+_STOPWORDS: FrozenSet[str] = frozenset({
+    "what", "is", "the", "a", "an", "how", "does", "do", "tell", "me",
+    "about", "it", "that", "this", "of", "for", "in", "on", "to", "and", "or",
+})
 
 # Try importing plato-training's tutor_judge for canonical bitvector logic
 try:
@@ -56,6 +62,8 @@ def text_fingerprint(text: str) -> int:
     """Compute a 64-bit fingerprint for a full text.
 
     Aggregates word fingerprints with a simple XOR/mix.
+    Stopwords are filtered so common function words don't inflate
+    similarity scores.
     """
     from eisenstein_embed.utils import tokenize
 
@@ -65,6 +73,8 @@ def text_fingerprint(text: str) -> int:
 
     fp = 0
     for word in words:
+        if word.lower() in _STOPWORDS:
+            continue
         wfp = word_fingerprint(word)
         # Mix using XOR and rotation to avoid cancellation
         fp ^= wfp

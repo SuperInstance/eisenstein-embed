@@ -12,6 +12,14 @@ from eisenstein_embed.bma_monitor import BMAMonitor
 from eisenstein_embed.cascade import CascadeMatcher
 
 
+class MatchResult:
+    """Result from EisensteinModel.match()."""
+    def __init__(self, best_match=None, score=0.0, method="none"):
+        self.best_match = best_match
+        self.score = score
+        self.method = method
+
+
 class EisensteinModel:
     """Drop-in replacement for Model2Vec's StaticModel.
 
