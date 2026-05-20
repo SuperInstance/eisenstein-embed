@@ -23,7 +23,13 @@ setup(
         "model2vec": ["model2vec>=0.3.0"],
         "tensor-spline": ["tensor-spline>=0.1.0"],  # when published
         "plato": ["plato-training>=0.5.0"],  # when published
-        "all": ["model2vec>=0.3.0", "faiss-cpu>=1.7.0"],
+        "mesh": ["plato-core>=0.1.0"],
+        "all": ["model2vec>=0.3.0", "faiss-cpu>=1.7.0", "plato-core>=0.1.0"],
+    },
+    entry_points={
+        "superinstance.plugins": [
+            "eisenstein-embed = eisenstein_embed.mesh:register_eisenstein",
+        ],
     },
     classifiers=[
         "Programming Language :: Python :: 3",

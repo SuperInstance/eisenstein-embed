@@ -84,6 +84,21 @@ eisenstein_embed/
 
 Benchmarks on 80 fleet-domain queries from 68 SuperInstance repos.
 
+## Mesh Protocol
+
+eisenstein-embed works standalone. Install `plato-core` to enable ecosystem meshing:
+
+```bash
+pip install eisenstein-embed[mesh]
+```
+
+When co-installed, eisenstein-embed auto-registers:
+- **matchers.eisenstein-cascade** — 5-layer cascade matcher
+- **matchers.eisenstein-bitvector** — bitvector fingerprinting
+- **encoders.eisenstein** — EisensteinModel as encoder
+
+Other packages can discover and use these capabilities automatically.
+
 ## License
 
 MIT

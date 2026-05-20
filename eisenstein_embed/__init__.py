@@ -32,3 +32,11 @@ __all__ = [
 ]
 
 __version__ = "0.1.0"
+
+# Auto-register with mesh if plato-core is installed
+try:
+    from plato_core.registry import registry
+    from eisenstein_embed.mesh import register_eisenstein
+    register_eisenstein(registry)
+except ImportError:
+    pass  # Standalone mode — eisenstein-embed works fine alone
