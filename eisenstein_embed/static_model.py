@@ -78,7 +78,11 @@ class EisensteinModel:
     def encode(self, texts: Union[str, List[str]]) -> np.ndarray:
         """Encode texts into dense vectors.
 
-        Returns a numpy array of shape (n_texts, dim).
+        Args:
+            texts: A single string or list of strings to encode.
+
+        Returns:
+            numpy array of shape (n_texts, dim).
         """
         if isinstance(texts, str):
             texts = [texts]
@@ -106,17 +110,35 @@ class EisensteinModel:
         threshold: Optional[float] = None,
         use_stemming: Optional[bool] = None,
     ) -> MatchResult:
-        """Find the best candidate for *query*.
+        """Find the best match for a query among candidates.
 
         Args:
-            query: Query text.
-            candidates: Candidate texts.
-            threshold: Optional bitvector threshold override.
-            use_stemming: Override model-level use_stemming. None = use model default.
+            query: The search string.
+            candidates: List of candidate strings to match against.
+            threshold: Minimum similarity score to return a match.
+            use_stemming: Whether to use morphological stemming.
+                Defaults to model setting.
 
         Returns:
-            MatchResult(best_match, score, method)
+            MatchResult with best_match, score, and method used.
+
+        Raises:
+            TypeError: If query or candidates are not strings/lists.
         """
+        if not isinstance(query, str):
+            raise TypeError(f"query must be str, got {type(query).__name__}")
+        if not isinstance(candidates, list):
+            raise TypeError(
+                f"candidates must be list, got {type(candidates).__name__}"
+            )
+        for i, c in enumerate(candidates):
+            if not isinstance(c, str):
+                raise TypeError(
+                    f"candidates[{i}] must be str, got {type(c).__name__}"
+                )
+        if not candidates:
+            return MatchResult(None, 0.0, "none")
+
         stemming = use_stemming if use_stemming is not None else self.use_stemming
         if threshold is not None:
             old_thresh = self.cascade.bitvector_threshold
@@ -127,6 +149,58 @@ class EisensteinModel:
         best, score, layer = self.cascade.match(query, candidates, use_stemming=stemming)
         return MatchResult(best_match=best, score=score, method=layer)
 
+    def add_knowledge(self, key: str, value: str) -> None:
+        """Store a key-value knowledge pair in the model.
+
+        Args:
+            key: The knowledge key string.
+            value: The knowledge value string.
+
+        Raises:
+            TypeError: If key or value are not strings.
+        """
+        if not isinstance(key, str):
+            raise TypeError(f"key must be str, got {type(key).__name__}")
+        if not isinstance(value, str):
+            raise TypeError(f"value must be str, got {type(value).__name__}")
+        # Store as a domain-compatible entry
+        if not hasattr(self, '_knowledge'):
+            self._knowledge = {}
+        self._knowledge[key] = value
+
+    def __getstate__(self):
+        """Return serializable state for pickling."""
+        state = self.__dict__.copy()
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from pickled data."""
+        self.__dict__.update(state)
+
+    def save(self, path):
+        """Save model to file.
+
+        Args:
+            path: File path to save the serialized model.
+        """
+        import pickle
+        with open(path, 'wb') as f:
+            pickle.dump(self, f)
+
+    @classmethod
+    def load(cls, path):
+        """Load model from file.
+
+        Args:
+            path: File path to load the model from.
+
+        Returns:
+            Deserialized EisensteinModel instance.
+        """
+        import pickle
+        with open(path, 'rb') as f:
+            return pickle.load(f)
+
     def add_domain(self, name: str, texts: List[str]) -> None:
         """Learn a domain-specific SIF profile from example texts."""
         dsif = DomainSIF()
@@ -136,19 +210,30 @@ class EisensteinModel:
         self.cascade.domain_sif = dsif
 
     def set_domain(self, name: Optional[str]) -> None:
-        """Activate a previously learned domain profile."""
+        """Activate a previously learned domain profile.
+
+        Args:
+            name: Domain name to activate, or None to deactivate.
+        """
         self.active_domain = name
         self.cascade.domain_sif = self.domain_sifs.get(name)
 
     def enable_self_tuning(self) -> None:
-        """Enable BMA drift detection and adaptive thresholds."""
+        """Enable BMA drift detection and adaptive thresholds.
+
+        Activates the Bayesian Moving Average monitor that tracks
+        score distributions and adjusts thresholds adaptively.
+        """
         self._self_tuning = True
         if self.bma_monitor is None:
             self.bma_monitor = BMAMonitor()
         self.cascade.bma_monitor = self.bma_monitor
 
     def disable_self_tuning(self) -> None:
-        """Disable BMA drift detection."""
+        """Disable BMA drift detection.
+
+        Deactivates the BMA monitor and resets adaptive thresholds.
+        """
         self._self_tuning = False
         self.bma_monitor = None
         self.cascade.bma_monitor = None
@@ -161,7 +246,15 @@ class EisensteinModel:
         return 64
 
     def similarity(self, texts1: Union[str, List[str]], texts2: Union[str, List[str]]) -> np.ndarray:
-        """Compute pairwise cosine similarities between two lists of texts."""
+        """Compute pairwise cosine similarities between two lists of texts.
+
+        Args:
+            texts1: First set of texts (string or list of strings).
+            texts2: Second set of texts (string or list of strings).
+
+        Returns:
+            numpy array of shape (len(texts1), len(texts2)) with cosine similarities.
+        """
         if isinstance(texts1, str):
             texts1 = [texts1]
         if isinstance(texts2, str):
