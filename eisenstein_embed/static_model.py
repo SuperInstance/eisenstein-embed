@@ -91,7 +91,7 @@ class EisensteinModel:
             return vectors
 
         # Fallback: hash-based deterministic embeddings
-        dim = 256
+        dim = 64
         return np.stack([hash_embedding(t, dim=dim) for t in texts])
 
     def match(
@@ -99,19 +99,20 @@ class EisensteinModel:
         query: str,
         candidates: List[str],
         threshold: Optional[float] = None,
-    ) -> tuple:
+    ) -> MatchResult:
         """Find the best candidate for *query*.
 
         Returns:
-            (best_candidate, score, layer_name)
+            MatchResult(best_match, score, method)
         """
         if threshold is not None:
             old_thresh = self.cascade.bitvector_threshold
             self.cascade.bitvector_threshold = threshold
-            result = self.cascade.match(query, candidates)
+            best, score, layer = self.cascade.match(query, candidates)
             self.cascade.bitvector_threshold = old_thresh
-            return result
-        return self.cascade.match(query, candidates)
+            return MatchResult(best_match=best, score=score, method=layer)
+        best, score, layer = self.cascade.match(query, candidates)
+        return MatchResult(best_match=best, score=score, method=layer)
 
     def add_domain(self, name: str, texts: List[str]) -> None:
         """Learn a domain-specific SIF profile from example texts."""
@@ -143,7 +144,7 @@ class EisensteinModel:
         """Return the embedding dimension."""
         if self.semantic_model is not None:
             return self.semantic_model.dim
-        return 256
+        return 64
 
     def similarity(self, texts1: Union[str, List[str]], texts2: Union[str, List[str]]) -> np.ndarray:
         """Compute pairwise cosine similarities between two lists of texts."""
