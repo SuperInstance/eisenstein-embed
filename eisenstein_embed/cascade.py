@@ -42,6 +42,7 @@ class CascadeMatcher:
         self,
         query: str,
         candidates: List[str],
+        use_stemming: bool = False,
     ) -> Tuple[Optional[str], float, str]:
         """Find the best candidate for *query* through the cascade.
 
@@ -63,7 +64,7 @@ class CascadeMatcher:
                 return candidates[i], score, "exact"
 
         # 2. BITVECTOR
-        bv_cand, bv_score = find_best_bitvector_match(query, candidates)
+        bv_cand, bv_score = find_best_bitvector_match(query, candidates, use_stemming=use_stemming)
         if bv_score >= self.bitvector_threshold:
             if self.bma_monitor is not None:
                 self.bma_monitor.record(query, bv_score, "bitvector")

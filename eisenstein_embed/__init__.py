@@ -5,6 +5,7 @@ from eisenstein_embed.cascade import CascadeMatcher
 from eisenstein_embed.bitvector import (
     word_fingerprint,
     text_fingerprint,
+    stem_word,
     hamming_distance,
     bitvector_similarity,
     find_best_bitvector_match,
@@ -20,6 +21,7 @@ __all__ = [
     "CascadeMatcher",
     "word_fingerprint",
     "text_fingerprint",
+    "stem_word",
     "hamming_distance",
     "bitvector_similarity",
     "find_best_bitvector_match",

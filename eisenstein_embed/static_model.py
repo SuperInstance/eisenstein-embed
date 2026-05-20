@@ -37,6 +37,7 @@ class EisensteinModel:
         semantic_threshold: float = 0.3,
         deadband_threshold: float = 0.90,
         deadband_max_size: int = 1000,
+        use_stemming: bool = False,
     ):
         self.semantic_model = semantic_model
         self.domain_sifs: dict = {}
@@ -54,6 +55,7 @@ class EisensteinModel:
             semantic_threshold=semantic_threshold,
         )
         self._self_tuning = False
+        self.use_stemming = use_stemming
 
     @classmethod
     def from_model2vec(cls, model_name: str, **kwargs):
@@ -102,19 +104,27 @@ class EisensteinModel:
         query: str,
         candidates: List[str],
         threshold: Optional[float] = None,
+        use_stemming: Optional[bool] = None,
     ) -> MatchResult:
         """Find the best candidate for *query*.
+
+        Args:
+            query: Query text.
+            candidates: Candidate texts.
+            threshold: Optional bitvector threshold override.
+            use_stemming: Override model-level use_stemming. None = use model default.
 
         Returns:
             MatchResult(best_match, score, method)
         """
+        stemming = use_stemming if use_stemming is not None else self.use_stemming
         if threshold is not None:
             old_thresh = self.cascade.bitvector_threshold
             self.cascade.bitvector_threshold = threshold
-            best, score, layer = self.cascade.match(query, candidates)
+            best, score, layer = self.cascade.match(query, candidates, use_stemming=stemming)
             self.cascade.bitvector_threshold = old_thresh
             return MatchResult(best_match=best, score=score, method=layer)
-        best, score, layer = self.cascade.match(query, candidates)
+        best, score, layer = self.cascade.match(query, candidates, use_stemming=stemming)
         return MatchResult(best_match=best, score=score, method=layer)
 
     def add_domain(self, name: str, texts: List[str]) -> None:
