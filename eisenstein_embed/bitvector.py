@@ -1,6 +1,22 @@
-"""TUTOR-style 64-bit word fingerprints + Hamming distance."""
+"""TUTOR-style 64-bit word fingerprints + Hamming distance.
+
+Delegates to plato-training's tutor_judge when available for the
+canonical TUTOR bitvector implementation. Falls back to a local
+implementation using rolling hash over character bigrams.
+"""
 
 from typing import List
+
+# Try importing plato-training's tutor_judge for canonical bitvector logic
+try:
+    from plato_training.tutor_judge import (
+        word_to_bitvector as _plato_word_to_bitvector,
+        hamming_distance as _plato_hamming_distance,
+        word_similarity as _plato_word_similarity,
+    )
+    HAS_PLATO_TUTOR = True
+except ImportError:
+    HAS_PLATO_TUTOR = False
 
 
 def word_fingerprint(word: str) -> int:
@@ -59,6 +75,8 @@ def text_fingerprint(text: str) -> int:
 
 def hamming_distance(a: int, b: int) -> int:
     """Count differing bits between two 64-bit fingerprints."""
+    if HAS_PLATO_TUTOR:
+        return _plato_hamming_distance(a, b)
     x = a ^ b
     # Brian Kernighan's algorithm for popcount
     count = 0

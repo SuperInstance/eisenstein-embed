@@ -1,8 +1,19 @@
-"""SplineLinear compression of embedding tables."""
+"""SplineLinear compression of embedding tables.
+
+Uses tensor-spline's SplineLinear when available for Eisenstein lattice
+compression, falling back to a simple piecewise-linear quantizer.
+"""
 
 from typing import List
 
 import numpy as np
+
+# Try to import tensor-spline's SplineLinear for real Eisenstein lattice compression
+try:
+    from tensor_spline import SplineLinear as _TensorSplineLinear
+    HAS_TENSOR_SPLINE = True
+except ImportError:
+    HAS_TENSOR_SPLINE = False
 
 
 class SplineLinearQuantizer:

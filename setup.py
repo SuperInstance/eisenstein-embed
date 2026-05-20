@@ -21,6 +21,9 @@ setup(
     ],
     extras_require={
         "model2vec": ["model2vec>=0.3.0"],
+        "tensor-spline": ["tensor-spline>=0.1.0"],  # when published
+        "plato": ["plato-training>=0.5.0"],  # when published
+        "all": ["model2vec>=0.3.0", "faiss-cpu>=1.7.0"],
     },
     classifiers=[
         "Programming Language :: Python :: 3",
