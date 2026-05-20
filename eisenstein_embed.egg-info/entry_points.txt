@@ -1,0 +1,2 @@
+[superinstance.plugins]
+eisenstein-embed = eisenstein_embed.mesh:register_eisenstein

@@ -75,12 +75,20 @@ except ImportError:
     HAS_PLATO_TUTOR = False
 
 
+def _fnv1a_64(data: str) -> int:
+    """Deterministic FNV-1a 64-bit hash — cross-language compatible."""
+    h = 0xCBF29CE484222325  # FNV offset basis
+    for ch in data:
+        h ^= ord(ch)
+        h = (h * 0x100000001B3) & 0xFFFFFFFFFFFFFFFF
+    return h
+
+
 def word_fingerprint(word: str) -> int:
     """Compute a 64-bit fingerprint for a single word.
 
-    Uses a simple rolling hash over character bigrams to set bits
-    in a 64-bit integer. This is fast and captures local character
-    structure, making it robust to small typos.
+    Uses FNV-1a over character bigrams to set bits in a 64-bit integer.
+    Deterministic and cross-language compatible (matches JS/npm version).
     """
     fp = 0
     word = word.lower()
@@ -90,14 +98,14 @@ def word_fingerprint(word: str) -> int:
     # Set bits based on character n-grams (unigrams and bigrams)
     for i, ch in enumerate(word):
         # Unigram hash
-        h = hash(ch) & 0xFFFFFFFFFFFFFFFF
+        h = _fnv1a_64(ch)
         bit = h % 64
         fp |= 1 << bit
 
         # Bigram hash
         if i + 1 < len(word):
             bigram = ch + word[i + 1]
-            h = hash(bigram) & 0xFFFFFFFFFFFFFFFF
+            h = _fnv1a_64(bigram)
             bit = h % 64
             fp |= 1 << bit
 

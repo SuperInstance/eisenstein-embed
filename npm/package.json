@@ -1,0 +1,30 @@
+{
+  "name": "@superinstance/eisenstein-embed",
+  "version": "0.1.0",
+  "description": "5-layer matching cascade: exact → bitvector → semantic → domain → deadband. 93.8% typo accuracy, zero ML deps.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "embedding",
+    "matching",
+    "bitvector",
+    "semantic-search",
+    "nlp",
+    "cascade"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SuperInstance/eisenstein-embed"
+  },
+  "homepage": "https://github.com/SuperInstance/eisenstein-embed#readme",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
