@@ -150,6 +150,7 @@ class EisensteinModel:
     def disable_self_tuning(self) -> None:
         """Disable BMA drift detection."""
         self._self_tuning = False
+        self.bma_monitor = None
         self.cascade.bma_monitor = None
 
     @property

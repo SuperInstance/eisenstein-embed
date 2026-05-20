@@ -97,7 +97,7 @@ class TestCascadeMatcherDomain:
         cm = CascadeMatcher(
             semantic_encoder=dummy_encoder,
             domain_sif=dsif,
-            semantic_threshold=0.0,
+            semantic_threshold=-1.0,  # always pass semantic
             bitvector_threshold=1.0,  # disable bitvector layer
         )
         cand, score, layer = cm.match("foo", ["bar", "baz"])

@@ -53,6 +53,9 @@ class CascadeMatcher:
             return None, 0.0, "none"
 
         norm_query = normalize_text(query)
+        if not norm_query:
+            return None, 0.0, "none"
+
         norm_candidates = [normalize_text(c) for c in candidates]
 
         # 1. EXACT
