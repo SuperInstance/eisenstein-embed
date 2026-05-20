@@ -10,9 +10,14 @@ import numpy as np
 
 
 def normalize_text(text: str) -> str:
-    """Lowercase, strip accents, and normalize whitespace."""
+    """Lowercase, strip combining marks (accents), and normalize whitespace.
+
+    Preserves non-ASCII base characters (CJK, Cyrillic, etc.) so that
+    Unicode text produces valid fingerprints instead of being stripped to empty.
+    """
     text = unicodedata.normalize("NFKD", text)
-    text = text.encode("ascii", "ignore").decode("utf-8")
+    # Remove combining marks (accents/diacritics) but keep base characters
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
     text = text.lower().strip()
     text = re.sub(r"\s+", " ", text)
     return text

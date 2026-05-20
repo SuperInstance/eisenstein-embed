@@ -22,6 +22,16 @@ class MatchResult:
     def __repr__(self):
         return f"MatchResult(best_match={self.best_match!r}, score={self.score:.3f}, method={self.method!r})"
 
+    def __eq__(self, other):
+        if not isinstance(other, MatchResult):
+            return NotImplemented
+        return (self.best_match == other.best_match
+                and abs(self.score - other.score) < 1e-6
+                and self.method == other.method)
+
+    def __hash__(self):
+        return hash((self.best_match, round(self.score, 6), self.method))
+
 
 class EisensteinModel:
     """Drop-in replacement for Model2Vec's StaticModel.
@@ -163,10 +173,70 @@ class EisensteinModel:
             raise TypeError(f"key must be str, got {type(key).__name__}")
         if not isinstance(value, str):
             raise TypeError(f"value must be str, got {type(value).__name__}")
-        # Store as a domain-compatible entry
         if not hasattr(self, '_knowledge'):
             self._knowledge = {}
         self._knowledge[key] = value
+
+    def remove_knowledge(self, key: str) -> bool:
+        """Remove a knowledge entry by key.
+
+        Args:
+            key: The key to remove.
+
+        Returns:
+            True if the key was found and removed, False otherwise.
+        """
+        if hasattr(self, '_knowledge') and key in self._knowledge:
+            del self._knowledge[key]
+            return True
+        return False
+
+    def clear_knowledge(self) -> None:
+        """Remove all stored knowledge entries."""
+        self._knowledge = {}
+
+    def __len__(self) -> int:
+        """Return the number of stored knowledge entries."""
+        return len(getattr(self, '_knowledge', {}))
+
+    def match_all(
+        self,
+        query: str,
+        candidates: List[str],
+        use_stemming: Optional[bool] = None,
+    ) -> List[MatchResult]:
+        """Score all candidates and return results sorted by score (desc).
+
+        Args:
+            query: The search string.
+            candidates: List of candidate strings to score.
+            use_stemming: Whether to use morphological stemming.
+
+        Returns:
+            List of MatchResult for all candidates, best first.
+
+        Raises:
+            TypeError: If query or candidates are invalid types.
+        """
+        if not isinstance(query, str):
+            raise TypeError(f"query must be str, got {type(query).__name__}")
+        if not isinstance(candidates, list):
+            raise TypeError(f"candidates must be list, got {type(candidates).__name__}")
+        for i, c in enumerate(candidates):
+            if not isinstance(c, str):
+                raise TypeError(f"candidates[{i}] must be str, got {type(c).__name__}")
+
+        stemming = use_stemming if use_stemming is not None else self.use_stemming
+        results = []
+        for candidate in candidates:
+            best, score, layer = self.cascade.match(
+                query, [candidate], use_stemming=stemming
+            )
+            results.append(MatchResult(
+                best_match=candidate, score=score, method=layer
+            ))
+        results.sort(key=lambda r: r.score, reverse=True)
+        return results
 
     def __getstate__(self):
         """Return serializable state for pickling."""
