@@ -15,6 +15,7 @@ setup(
     author_email="casey@superinstance.com",
     url="https://github.com/SuperInstance/eisenstein-embed",
     packages=find_packages(),
+    package_data={"eisenstein_embed": ["py.typed"]},
     python_requires=">=3.8",
     install_requires=[
         "numpy>=1.20.0",

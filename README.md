@@ -1,5 +1,10 @@
 # eisenstein-embed
 
+[![PyPI version](https://img.shields.io/pypi/v/eisenstein-embed.svg)](https://pypi.org/project/eisenstein-embed/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](tests/)
+
 Enhanced static embeddings with a **5-layer matching cascade**. Drop-in enhancement of [Model2Vec](https://github.com/MinishLab/model2vec).
 
 ## What It Does

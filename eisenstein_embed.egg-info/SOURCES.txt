@@ -9,6 +9,7 @@ eisenstein_embed/deadband_rust.py
 eisenstein_embed/domain_sif.py
 eisenstein_embed/eisenstein_quantize.py
 eisenstein_embed/mesh.py
+eisenstein_embed/py.typed
 eisenstein_embed/static_model.py
 eisenstein_embed/utils.py
 eisenstein_embed.egg-info/PKG-INFO
@@ -24,3 +25,4 @@ tests/test_deadband_cache.py
 tests/test_domain_sif.py
 tests/test_eisenstein_quantize.py
 tests/test_static_model.py
+tests/test_unicode.py

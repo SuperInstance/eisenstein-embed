@@ -1,5 +1,6 @@
 """Drop-in StaticModel replacement (extends Model2Vec)."""
 
+import threading
 from typing import List, Optional, Union
 
 import numpy as np
@@ -14,10 +15,15 @@ from eisenstein_embed.cascade import CascadeMatcher
 
 class MatchResult:
     """Result from EisensteinModel.match()."""
-    def __init__(self, best_match=None, score=0.0, method="none"):
-        self.best_match = best_match
-        self.score = score
-        self.method = method
+    def __init__(
+        self,
+        best_match: Optional[str] = None,
+        score: float = 0.0,
+        method: str = "none",
+    ) -> None:
+        self.best_match: Optional[str] = best_match
+        self.score: float = score
+        self.method: str = method
     
     def __repr__(self):
         return f"MatchResult(best_match={self.best_match!r}, score={self.score:.3f}, method={self.method!r})"
@@ -49,6 +55,7 @@ class EisensteinModel:
         deadband_max_size: int = 1000,
         use_stemming: bool = False,
     ):
+        self._lock = threading.Lock()
         self.semantic_model = semantic_model
         self.domain_sifs: dict = {}
         self.active_domain: Optional[str] = None
@@ -173,9 +180,10 @@ class EisensteinModel:
             raise TypeError(f"key must be str, got {type(key).__name__}")
         if not isinstance(value, str):
             raise TypeError(f"value must be str, got {type(value).__name__}")
-        if not hasattr(self, '_knowledge'):
-            self._knowledge = {}
-        self._knowledge[key] = value
+        with self._lock:
+            if not hasattr(self, '_knowledge'):
+                self._knowledge = {}
+            self._knowledge[key] = value
 
     def remove_knowledge(self, key: str) -> bool:
         """Remove a knowledge entry by key.
@@ -186,14 +194,16 @@ class EisensteinModel:
         Returns:
             True if the key was found and removed, False otherwise.
         """
-        if hasattr(self, '_knowledge') and key in self._knowledge:
-            del self._knowledge[key]
-            return True
-        return False
+        with self._lock:
+            if hasattr(self, '_knowledge') and key in self._knowledge:
+                del self._knowledge[key]
+                return True
+            return False
 
     def clear_knowledge(self) -> None:
         """Remove all stored knowledge entries."""
-        self._knowledge = {}
+        with self._lock:
+            self._knowledge = {}
 
     def __len__(self) -> int:
         """Return the number of stored knowledge entries."""
@@ -247,7 +257,7 @@ class EisensteinModel:
         """Restore state from pickled data."""
         self.__dict__.update(state)
 
-    def save(self, path):
+    def save(self, path: str) -> None:
         """Save model to file.
 
         Args:
@@ -258,7 +268,7 @@ class EisensteinModel:
             pickle.dump(self, f)
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path: str) -> "EisensteinModel":
         """Load model from file.
 
         Args:
@@ -275,9 +285,10 @@ class EisensteinModel:
         """Learn a domain-specific SIF profile from example texts."""
         dsif = DomainSIF()
         dsif.fit(texts)
-        self.domain_sifs[name] = dsif
-        self.active_domain = name
-        self.cascade.domain_sif = dsif
+        with self._lock:
+            self.domain_sifs[name] = dsif
+            self.active_domain = name
+            self.cascade.domain_sif = dsif
 
     def set_domain(self, name: Optional[str]) -> None:
         """Activate a previously learned domain profile.
@@ -285,8 +296,9 @@ class EisensteinModel:
         Args:
             name: Domain name to activate, or None to deactivate.
         """
-        self.active_domain = name
-        self.cascade.domain_sif = self.domain_sifs.get(name)
+        with self._lock:
+            self.active_domain = name
+            self.cascade.domain_sif = self.domain_sifs.get(name)
 
     def enable_self_tuning(self) -> None:
         """Enable BMA drift detection and adaptive thresholds.
